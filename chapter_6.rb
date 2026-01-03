@@ -677,7 +677,9 @@ road_bike.spares
 
 ############## Page 136 ##############
 class Bicycle
+  @spares = []
   attr_reader :size, :chain, :tire_size
+  add_spare :tire_size, :chain
 
   def initialize(args={})
     @size       = args[:size]
@@ -687,6 +689,7 @@ class Bicycle
   end
 
   def spares
+    self.class.instance_variables_get(:@spares).each_with_object({}) { |method_name, obj| obj[method_name] = send(method_name) }
     { tire_size: tire_size,
       chain:     chain}.merge(local_spares)
   end
@@ -700,25 +703,23 @@ class Bicycle
     nil
   end
 
-  def local_spares
-    {}
-  end
-
   def default_chain
     '10-speed'
   end
 
+  def self.add_spare(method_names)
+    Array(method_names).each do |method_name|
+      @spares << method_name
+    end
+  end
 end
 
 class RoadBike < Bicycle
   attr_reader :tape_color
+  add_spare :tape_color
 
   def post_initialize(args)
     @tape_color = args[:tape_color]
-  end
-
-  def local_spares
-    {tape_color: tape_color}
   end
 
   def default_tire_size
@@ -728,14 +729,11 @@ end
 
 class MountainBike < Bicycle
   attr_reader :front_shock, :rear_shock
+  add_spare :rear_shock
 
   def post_initialize(args)
     @front_shock = args[:front_shock]
     @rear_shock =  args[:rear_shock]
-  end
-
-  def local_spares
-    {rear_shock:  rear_shock}
   end
 
   def default_tire_size
@@ -746,13 +744,10 @@ end
 ############## Page 138 ##############
 class RecumbentBike < Bicycle
   attr_reader :flag
+  add_spare :flag
 
   def post_initialize(args)
     @flag = args[:flag]
-  end
-
-  def local_spares
-    {flag: flag}
   end
 
   def default_chain
